@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de penetração · Programa Bilíngue Poliedro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet">
+<style>
+/* Paleta institucional PROVISÓRIA: substituir pelos hex do brandbook Poliedro (só estas variáveis) */
+:root{
+  --brand:#12355B;        /* azul institucional */
+  --brand-2:#2D6A9F;      /* azul secundário */
+  --accent:#E08A1E;       /* destaque */
+  --ok:#2E7D5B;
+  --warn:#B4441C;
+  --ink:#1B2430;
+  --muted:#5A6573;
+  --line:#D8DEE6;
+  --paper:#F7F9FB;
+  --card:#FFFFFF;
+  --band:rgba(46,125,91,.14);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --brand:#8FB6E0; --brand-2:#6FA3D6; --accent:#F0A445; --ok:#5DBB8E; --warn:#F07F5A;
+    --ink:#E6ECF2; --muted:#A3AEBB; --line:#2C3644; --paper:#0F1620; --card:#16202C; --band:rgba(93,187,142,.18);
+  }
+}
+:root[data-theme="dark"]{
+  --brand:#8FB6E0; --brand-2:#6FA3D6; --accent:#F0A445; --ok:#5DBB8E; --warn:#F07F5A;
+  --ink:#E6ECF2; --muted:#A3AEBB; --line:#2C3644; --paper:#0F1620; --card:#16202C; --band:rgba(93,187,142,.18);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Libre Franklin",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+header{border-left:6px solid var(--brand);padding:4px 0 4px 18px;margin-bottom:28px}
+h1{font-family:"Source Serif 4",Georgia,serif;font-weight:700;font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.15;margin:0 0 6px;color:var(--brand)}
+header p{margin:0;color:var(--muted);max-width:70ch}
+.grid{display:grid;grid-template-columns:330px 1fr;gap:24px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.controls{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:900px){.controls{position:static}}
+.controls h2,.section h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.2rem;margin:0 0 14px;color:var(--brand)}
+.field{margin-bottom:18px}
+.field label{display:flex;justify-content:space-between;gap:8px;font-weight:600;font-size:.92rem;margin-bottom:6px}
+.field label output{font-family:"Source Serif 4",Georgia,serif;font-size:1.05rem;color:var(--brand)}
+.hint{font-size:.8rem;color:var(--muted);margin-top:4px}
+input[type=range]{width:100%;accent-color:var(--brand)}
+input[type=number],select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:inherit}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.presets button{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:.82rem;cursor:pointer}
+.presets button[aria-pressed="true"]{background:var(--brand);color:var(--card);border-color:var(--brand)}
+details{border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
+summary{cursor:pointer;font-weight:600;font-size:.92rem;color:var(--brand)}
+details .field{margin-top:12px}
+.answer{background:var(--brand);color:#fff;border-radius:10px;padding:26px 26px 22px;margin-bottom:20px}
+:root[data-theme="dark"] .answer{background:#1B3A5C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .answer{background:#1B3A5C}}
+.answer .q{font-size:.95rem;opacity:.85;margin:0 0 8px}
+.answer .big{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(2.4rem,6vw,3.6rem);font-weight:700;line-height:1;margin:0}
+.answer .big small{font-size:1rem;font-weight:500;font-family:"Libre Franklin",sans-serif;opacity:.9;margin-left:8px}
+.answer .lead{margin:14px 0 0;font-size:1.02rem;max-width:68ch}
+.status{display:inline-block;margin-top:14px;padding:5px 12px;border-radius:999px;font-weight:600;font-size:.88rem;background:rgba(255,255,255,.16)}
+.section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:20px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.kpi .v{font-family:"Source Serif 4",Georgia,serif;font-size:1.45rem;font-weight:700;color:var(--brand);line-height:1.1}
+.kpi .l{font-size:.82rem;color:var(--muted);margin-top:4px}
+.split{display:flex;height:42px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.split div{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;transition:width .35s ease}
+.split .b{background:var(--brand)}
+.split .m{background:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:.86rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.ref{margin-top:10px;font-size:.86rem;color:var(--muted)}
+.scale{position:relative;height:46px;margin:30px 0 8px;border-bottom:2px solid var(--line)}
+.scale .band{position:absolute;top:8px;bottom:0;background:var(--band);border-left:2px dashed var(--ok);border-right:2px dashed var(--ok)}
+.scale .band span{position:absolute;top:-24px;left:0;right:0;text-align:center;font-size:.78rem;color:var(--ok);font-weight:600;white-space:nowrap}
+.scale .mark{position:absolute;bottom:-2px;width:3px;height:40px;background:var(--accent);transition:left .35s ease}
+.scale .mark b{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);font-size:.8rem;color:var(--accent);white-space:nowrap}
+.ticks{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted)}
+.chart-box{overflow-x:auto}
+svg text{font-family:"Libre Franklin",system-ui,sans-serif}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:.82rem}
+tr.cur td{background:var(--band);font-weight:700}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:600}
+.p-ok{background:var(--band);color:var(--ok)}
+.p-low{background:rgba(45,106,159,.14);color:var(--brand-2)}
+.p-hi{background:rgba(180,68,28,.14);color:var(--warn)}
+.p-zero{background:rgba(90,101,115,.14);color:var(--muted)}
+.notes{font-size:.86rem;color:var(--muted)}
+.notes p{margin:0 0 8px;max-width:90ch}
+.notes ul{margin:0;padding-left:18px}
+.notes li{margin-bottom:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Simulador de penetração: base Poliedro e mercado aberto</h1>
+  <p>Escolha quanto da base de Associadas o programa conquista e veja quantos alunos precisam vir de escolas fora da base para bater a meta do BP, comparado ao SAM e ao SOM do market sizing.</p>
+</header>
+
+<div class="grid">
+  <aside class="panel controls" aria-label="Parâmetros da simulação">
+    <h2>Parâmetros</h2>
+
+    <div class="field">
+      <label for="pen">Penetração na base de Associadas <output id="penOut"></output></label>
+      <input type="range" id="pen" min="0" max="60" step="0.5" value="10">
+      <div class="presets" id="presets" role="group" aria-label="Atalhos de penetração">
+        <button type="button" data-v="10">10%</button>
+        <button type="button" data-v="20">20%</button>
+        <button type="button" data-v="30">30%</button>
+        <button type="button" data-v="bp">Rampa do BP</button>
+      </div>
+      <div class="hint">% dos alunos em escopo (EI a EF) das Associadas que adotam o programa.</div>
+    </div>
+
+    <div class="field">
+      <label for="ano">Ano da meta</label>
+      <select id="ano"></select>
+      <div class="hint">Meta de alunos da rampa do BP, já líquida de churn.</div>
+    </div>
+
+    <div class="field">
+      <label for="mix">Alunos no formato de 5 aulas <output id="mixOut"></output></label>
+      <input type="range" id="mix" min="0" max="100" step="5" value="50">
+      <div class="hint">Mix ainda não definido no BP. Preço líquido: R$ 550 (3 aulas) e R$ 800 (5 aulas).</div>
+    </div>
+
+    <details>
+      <summary>Premissas do market sizing</summary>
+      <div class="field"><label for="meta">Meta de alunos (editável)</label><input type="number" id="meta" min="0" step="1"></div>
+      <div class="field"><label for="base">Alunos em escopo nas Associadas</label><input type="number" id="base" min="1" step="1" value="158454"><div class="hint">EI 18.931 · EFAI 65.483 · EFAF 74.040 (dado interno, out/2026).</div></div>
+      <div class="field"><label for="escolasBase">Escolas Associadas</label><input type="number" id="escolasBase" min="1" step="1" value="771"></div>
+      <div class="field"><label for="sam">SAM comprovado (alunos)</label><input type="number" id="sam" min="1" step="1" value="964133"></div>
+      <div class="field"><label for="somLo">SOM: captura mínima (% do SAM)</label><input type="number" id="somLo" min="0" max="100" step="0.5" value="5"></div>
+      <div class="field"><label for="somHi">SOM: captura máxima (% do SAM)</label><input type="number" id="somHi" min="0" max="100" step="0.5" value="10"></div>
+      <div class="field"><label for="porEscola">Alunos em escopo por escola externa</label><input type="number" id="porEscola" min="1" step="1" value="136"><div class="hint">Média da rede privada (Inep 2025). Escolas do SAM tendem a ser maiores, então o número de escolas é um teto.</div></div>
+    </details>
+  </aside>
+
+  <main>
+    <section class="answer" aria-live="polite">
+      <p class="q" id="q"></p>
+      <p class="big" id="big"></p>
+      <p class="lead" id="lead"></p>
+      <span class="status" id="status"></span>
+    </section>
+
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="kBase"></div><div class="l">alunos vindos da base</div></div>
+      <div class="kpi"><div class="v" id="kEscB"></div><div class="l">Associadas equivalentes</div></div>
+      <div class="kpi"><div class="v" id="kEscM"></div><div class="l">escolas externas (teto)</div></div>
+      <div class="kpi"><div class="v" id="kRec"></div><div class="l">receita da parcela externa/ano</div></div>
+    </div>
+
+    <section class="section">
+      <h2>Como a meta se divide</h2>
+      <div class="split" role="img" id="splitBar" aria-label="">
+        <div class="b" id="sb"></div><div class="m" id="sm"></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--brand)"></i>Base de Associadas</span><span><i style="background:var(--accent)"></i>Mercado aberto</span></div>
+      <p class="ref" id="ref"></p>
+    </section>
+
+    <section class="section">
+      <h2>O mercado aberto cabe no SOM?</h2>
+      <p class="notes" style="margin:0">Alunos externos necessários como % do SAM comprovado. A faixa verde é o SOM.</p>
+      <div class="scale" id="scale"><div class="band" id="band"><span id="bandLbl"></span></div><div class="mark" id="mark"><b id="markLbl"></b></div></div>
+      <div class="ticks" id="ticks"></div>
+      <div class="kpis" style="margin:18px 0 0">
+        <div class="kpi"><div class="v" id="pSam"></div><div class="l">do SAM comprovado (964 mil)</div></div>
+        <div class="kpi"><div class="v" id="pSamE"></div><div class="l">do SAM estrutural (3,56 mi)</div></div>
+        <div class="kpi"><div class="v" id="pTam"></div><div class="l">do TAM (5,67 mi)</div></div>
+        <div class="kpi"><div class="v" id="pSom"></div><div class="l">do SOM máximo</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Curva de troca: base x mercado aberto</h2>
+      <div class="chart-box"><svg id="chart" viewBox="0 0 720 320" width="100%" role="img" aria-label="Alunos externos necessários por nível de penetração na base"></svg></div>
+    </section>
+
+    <section class="section">
+      <h2>Cenários de penetração</h2>
+      <div class="tbl"><table id="tbl"><thead><tr><th>Penetração na base</th><th>Alunos da base</th><th>Alunos no mercado aberto</th><th>% do SAM comprovado</th><th>Escolas externas (teto)</th><th>Leitura</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section class="section notes">
+      <h2>Premissas e fontes</h2>
+      <ul>
+        <li>Meta: rampa do BP (2028 a 2033), líquida de churn, confirmada pela Gerência Bilíngue em out/2026. Divisão de referência do BP: 80% Associadas e 20% fora da base.</li>
+        <li>Base: 158.454 alunos de EI a EF em 771 Associadas (dado interno, out/2026). A base é tratada como fixa até 2033.</li>
+        <li>TAM: 5.671.370 alunos de pré-escola a EF Anos Finais na rede privada paga (Inep, Censo Escolar 2025).</li>
+        <li>SAM comprovado: 17% do TAM (~964 mil), soma dos alunos declarados pelos principais programas bilíngues (benchmark v3, 24/09/2026). SAM estrutural: 62,8% do TAM (escolas com mais de 200 alunos; Lumni/Inep 2025).</li>
+        <li>SOM: 5% a 10% do SAM comprovado. Faixa herdada de exercícios anteriores, sem fonte primária; recalibrar com o teste comercial.</li>
+        <li>Preço líquido por aluno/ano, base 2026, aprovado pelo Conselho. Reajustes não considerados.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+</div>
+
+<script>
+(function(){
+  var RAMPA={2028:1509,2029:8676,2030:23026,2031:39028,2032:61994,2033:84811};
+  var BPPEN={2028:0.8,2029:4.4,2030:11.6,2031:19.7,2032:31.3,2033:42.8};
+  var TAM=5671370, SAME=3563849;
+  var $=function(id){return document.getElementById(id)};
+  var nf=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+  var pf=function(x,d){return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d===undefined?1:d,maximumFractionDigits:d===undefined?1:d}).format(x)+'%'};
+  var money=function(x){ if(x>=1e6) return 'R$ '+new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}).format(x/1e6)+' mi'; return 'R$ '+nf.format(Math.round(x/1e3))+' mil'};
+
+  var ano=$('ano');
+  Object.keys(RAMPA).forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y+' · '+nf.format(RAMPA[y])+' alunos';ano.appendChild(o)});
+  ano.value='2033'; $('meta').value=RAMPA[2033];
+
+  function v(id){var x=parseFloat($(id).value);return isNaN(x)?0:x}
+  function classify(share,lo,hi,ext){
+    if(ext<=0) return {t:'A base cobre a meta sozinha',c:'p-zero'};
+    if(share<lo) return {t:'Abaixo do SOM: captura conservadora',c:'p-low'};
+    if(share<=hi) return {t:'Dentro da faixa de SOM',c:'p-ok'};
+    return {t:'Acima do SOM: captura agressiva',c:'p-hi'};
+  }
+  function calc(pen){
+    var meta=v('meta'), base=v('base'), sam=v('sam');
+    var fromBase=Math.min(base*pen/100, meta);
+    var ext=Math.max(0, meta-base*pen/100);
+    return {meta:meta,fromBase:fromBase,ext:ext,share:ext/sam*100,escM:ext/v('porEscola'),escB:v('escolasBase')*pen/100};
+  }
+
+  function render(){
+    var pen=v('pen'), lo=v('somLo'), hi=v('somHi'), y=ano.value;
+    $('penOut').textContent=pf(pen); $('mixOut').textContent=pf(v('mix'),0);
+    document.querySelectorAll('#presets button').forEach(function(b){
+      var tv=b.dataset.v==='bp'?BPPEN[y]:parseFloat(b.dataset.v); b.setAttribute('aria-pressed', Math.abs(tv-pen)<0.01?'true':'false');
+      if(b.dataset.v==='bp') b.textContent='Rampa do BP ('+pf(BPPEN[y])+')';
+    });
+    var r=calc(pen), price=550+(800-550)*v('mix')/100;
+    var st=classify(r.share,lo,hi,r.ext);
+
+    $('q').textContent='Se o programa conquistar '+pf(pen)+' da base de Associadas, a meta de '+nf.format(r.meta)+' alunos em '+y+' exige:';
+    $('big').innerHTML=nf.format(Math.round(r.ext))+'<small>alunos no mercado aberto</small>';
+    $('lead').textContent = r.ext>0
+      ? 'Isso representa '+pf(r.share)+' do SAM comprovado e '+pf(r.ext/r.meta*100,0)+' da meta. O SOM vai de '+pf(lo,0)+' a '+pf(hi,0)+' do SAM ('+nf.format(v('sam')*lo/100)+' a '+nf.format(v('sam')*hi/100)+' alunos).'
+      : 'A base entrega a meta inteira. Sobram '+nf.format(Math.round(v('base')*pen/100-r.meta))+' alunos acima da meta.';
+    $('status').textContent=st.t;
+
+    $('kBase').textContent=nf.format(Math.round(r.fromBase));
+    $('kEscB').textContent='~'+nf.format(Math.round(r.escB));
+    $('kEscM').textContent='até ~'+nf.format(Math.ceil(r.escM));
+    $('kRec').textContent=money(r.ext*price);
+
+    var pb=r.meta>0?r.fromBase/r.meta*100:0, pm=100-pb;
+    $('sb').style.width=pb+'%'; $('sm').style.width=pm+'%';
+    $('sb').textContent=pb>=12?pf(pb,0):''; $('sm').textContent=pm>=12?pf(pm,0):'';
+    $('splitBar').setAttribute('aria-label','Base '+pf(pb,0)+', mercado aberto '+pf(pm,0));
+    var bpExt=r.meta*0.2;
+    $('ref').textContent='Referência do BP: 80% base ('+nf.format(Math.round(r.meta*0.8))+') e 20% mercado aberto ('+nf.format(Math.round(bpExt))+'). Neste cenário, o mercado aberto precisa entregar '+(r.ext>0?(new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(r.ext/bpExt))+'x':'0x')+' o previsto no BP.';
+
+    var maxS=Math.max(15, Math.ceil(r.share/5)*5, hi+5);
+    $('band').style.left=(lo/maxS*100)+'%'; $('band').style.width=((hi-lo)/maxS*100)+'%';
+    $('bandLbl').textContent='SOM '+pf(lo,0)+'–'+pf(hi,0);
+    $('mark').style.left='calc('+(Math.min(r.share,maxS)/maxS*100)+'% - 1px)';
+    $('markLbl').textContent=pf(r.share);
+    var t=''; for(var i=0;i<=maxS;i+=maxS/5){t+='<span>'+pf(i,0)+'</span>'} $('ticks').innerHTML=t;
+
+    $('pSam').textContent=pf(r.share); $('pSamE').textContent=pf(r.ext/SAME*100);
+    $('pTam').textContent=pf(r.ext/TAM*100,2); $('pSom').textContent=pf(r.ext/(v('sam')*hi/100)*100,0);
+
+    drawChart(pen,y,lo,hi);
+    var rows='', steps=[0,5,10,15,20,25,30,35,40,45,50,60];
+    if(steps.indexOf(BPPEN[y])<0) steps.push(BPPEN[y]); steps.sort(function(a,b){return a-b});
+    steps.forEach(function(p){
+      var c=calc(p), s=classify(c.share,lo,hi,c.ext), cur=Math.abs(p-pen)<0.01;
+      rows+='<tr'+(cur?' class="cur"':'')+'><td>'+pf(p)+(p===BPPEN[y]?' (rampa BP)':'')+'</td><td>'+nf.format(Math.round(c.fromBase))+'</td><td>'+nf.format(Math.round(c.ext))+'</td><td>'+pf(c.share)+'</td><td>'+(c.ext>0?'até ~'+nf.format(Math.ceil(c.escM)):'0')+'</td><td><span class="pill '+s.c+'">'+s.t+'</span></td></tr>';
+    });
+    document.querySelector('#tbl tbody').innerHTML=rows;
+  }
+
+  function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+  function drawChart(pen,y,lo,hi){
+    var W=720,H=320,L=70,R=20,T=20,B=46, sam=v('sam'), meta=v('meta');
+    var maxY=Math.max(meta, sam*hi/100)*1.08, maxX=60;
+    var X=function(p){return L+(p/maxX)*(W-L-R)}, Y=function(a){return T+(1-a/maxY)*(H-T-B)};
+    var s='';
+    s+='<rect x="'+L+'" y="'+Y(sam*hi/100)+'" width="'+(W-L-R)+'" height="'+(Y(sam*lo/100)-Y(sam*hi/100))+'" fill="'+css('--band')+'"/>';
+    s+='<text x="'+(W-R-6)+'" y="'+(Y(sam*hi/100)+15)+'" text-anchor="end" font-size="12" fill="'+css('--ok')+'" font-weight="600">SOM ('+pf(lo,0)+'–'+pf(hi,0)+' do SAM)</text>';
+    for(var g=0;g<=4;g++){var a=maxY/4*g; s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(a)+'" y2="'+Y(a)+'" stroke="'+css('--line')+'"/><text x="'+(L-8)+'" y="'+(Y(a)+4)+'" text-anchor="end" font-size="11" fill="'+css('--muted')+'">'+nf.format(Math.round(a/1000))+' mil</text>'}
+    for(var p=0;p<=maxX;p+=10){s+='<text x="'+X(p)+'" y="'+(H-B+18)+'" text-anchor="middle" font-size="11" fill="'+css('--muted')+'">'+p+'%</text>'}
+    s+='<text x="'+((L+W-R)/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="12" fill="'+css('--muted')+'">Penetração na base de Associadas</text>';
+    var pts=[];for(var q=0;q<=maxX;q+=0.5){pts.push(X(q)+','+Y(calc(q).ext))}
+    s+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+css('--accent')+'" stroke-width="3"/>';
+    var bp=BPPEN[y], cb=calc(bp);
+    s+='<circle cx="'+X(bp)+'" cy="'+Y(cb.ext)+'" r="6" fill="'+css('--card')+'" stroke="'+css('--brand')+'" stroke-width="2.5"/>';
+    s+='<text x="'+(X(bp)+10)+'" y="'+(Y(cb.ext)-10)+'" font-size="12" fill="'+css('--brand')+'" font-weight="600">Rampa do BP</text>';
+    var c=calc(pen);
+    s+='<line x1="'+X(pen)+'" x2="'+X(pen)+'" y1="'+T+'" y2="'+(H-B)+'" stroke="'+css('--brand')+'" stroke-dasharray="4 4"/>';
+    s+='<circle cx="'+X(pen)+'" cy="'+Y(c.ext)+'" r="7" fill="'+css('--accent')+'"/>';
+    var lx=X(pen)>W-190?X(pen)-12:X(pen)+12, anc=X(pen)>W-190?'end':'start';
+    s+='<text x="'+lx+'" y="'+(Y(c.ext)+22)+'" text-anchor="'+anc+'" font-size="12.5" fill="'+css('--ink')+'" font-weight="700">'+nf.format(Math.round(c.ext))+' externos</text>';
+    $('chart').innerHTML=s;
+  }
+
+  ['pen','mix','base','escolasBase','sam','somLo','somHi','porEscola','meta'].forEach(function(id){$(id).addEventListener('input',render)});
+  ano.addEventListener('change',function(){$('meta').value=RAMPA[ano.value];render()});
+  document.querySelectorAll('#presets button').forEach(function(b){b.addEventListener('click',function(){$('pen').value=b.dataset.v==='bp'?BPPEN[ano.value]:b.dataset.v;render()})});
+  if(window.matchMedia){window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render)}
+  render();
+})();
+</script>
+</body>
+</html>
